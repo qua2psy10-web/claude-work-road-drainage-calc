@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>道路排水路 流量計算システム</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f4f8;color:#2d3748;font-size:14px;min-height:100vh}
+h1{font-size:1.1rem;font-weight:700;color:#fff}
+.header{background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.header-sub{font-size:.75rem;opacity:.8;margin-top:2px}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e2e8f0;overflow-x:auto;position:sticky;top:53px;z-index:90;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.tab{padding:10px 16px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;font-size:.85rem;color:#718096;transition:all .2s;user-select:none}
+.tab:hover{color:#2b6cb0;background:#f7fafc}
+.tab.active{color:#2b6cb0;border-bottom-color:#2b6cb0;font-weight:600}
+.container{max-width:1100px;margin:0 auto;padding:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:16px}
+.card-title{font-size:.9rem;font-weight:700;color:#1a365d;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #ebf4ff;display:flex;align-items:center;gap:6px}
+label{display:block;font-size:.78rem;color:#4a5568;margin-bottom:4px;font-weight:500}
+input[type=number],input[type=text],select{width:100%;padding:7px 10px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:.85rem;background:#fff;color:#2d3748;transition:border-color .2s}
+input[type=number]:focus,select:focus{outline:none;border-color:#4299e1;box-shadow:0 0 0 3px rgba(66,153,225,.15)}
+.form-group{margin-bottom:12px}
+.unit{font-size:.72rem;color:#718096;margin-top:2px}
+.btn{padding:8px 18px;border-radius:7px;border:none;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.btn-primary{background:#2b6cb0;color:#fff}
+.btn-primary:hover{background:#2c5282}
+.btn-success{background:#276749;color:#fff}
+.btn-success:hover{background:#22543d}
+.btn-danger{background:#c53030;color:#fff}
+.btn-danger:hover{background:#9b2c2c}
+.btn-sm{padding:5px 12px;font-size:.78rem}
+.result-box{background:#ebf8ff;border:1px solid #bee3f8;border-radius:8px;padding:14px;margin-top:12px}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #bee3f8}
+.result-row:last-child{border-bottom:none}
+.result-label{font-size:.8rem;color:#2c5282}
+.result-value{font-size:.95rem;font-weight:700;color:#1a365d}
+.result-unit{font-size:.72rem;color:#4a7cad;margin-left:4px}
+.ok-badge{background:#c6f6d5;color:#276749;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:700}
+.ng-badge{background:#fed7d7;color:#c53030;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:700}
+.warn-badge{background:#fefcbf;color:#744210;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:700}
+.formula-box{background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:.78rem;color:#4a5568;font-family:monospace}
+.svg-container{display:flex;justify-content:center;align-items:center;padding:10px 0}
+.hidden{display:none}
+.section-panel{display:none}
+.section-panel.active{display:block}
+table.comp{width:100%;border-collapse:collapse;font-size:.8rem}
+table.comp th{background:#2b6cb0;color:#fff;padding:7px 10px;text-align:center;font-weight:600}
+table.comp td{padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center}
+table.comp tr:nth-child(even) td{background:#f7fafc}
+.alert{padding:10px 14px;border-radius:6px;font-size:.8rem;margin-bottom:12px}
+.alert-info{background:#ebf8ff;border:1px solid #bee3f8;color:#2c5282}
+.alert-warn{background:#fffbeb;border:1px solid #fbd38d;color:#744210}
+.add-case-btn{margin-top:8px}
+table.ntbl{width:100%;border-collapse:collapse;font-size:.76rem;min-width:820px}
+table.ntbl th{background:#2d3748;color:#fff;padding:6px 8px;text-align:center;font-weight:600;white-space:nowrap}
+table.ntbl td{padding:5px 5px;border-bottom:1px solid #e2e8f0;vertical-align:middle}
+table.ntbl select,table.ntbl input[type=number],table.ntbl input[type=text]{padding:4px 5px;font-size:.75rem;width:100%}
+.net-bar-wrap{margin-bottom:12px}
+.net-bar-label{font-size:.78rem;color:#2d3748;margin-bottom:3px;font-weight:500}
+.net-bar-track{height:22px;background:#e2e8f0;border-radius:4px;position:relative;overflow:visible}
+.net-bar-q{height:100%;border-radius:4px 0 0 4px;background:#4299e1;transition:width .4s;display:flex;align-items:center;padding-left:6px;font-size:.7rem;color:#fff;font-weight:600;white-space:nowrap;min-width:2px}
+.net-bar-cap{position:absolute;top:0;height:100%;border-right:3px solid #276749;display:flex;align-items:center}
+.net-bar-cap::after{content:attr(data-label);position:absolute;left:5px;font-size:.68rem;color:#276749;font-weight:700;white-space:nowrap}
+.net-bar-over .net-bar-q{background:#fc8181}
+.c-mode-btn{background:#e2e8f0;color:#4a5568;border:1.5px solid #cbd5e0}
+.c-mode-btn.active-mode{background:#2b6cb0;color:#fff;border-color:#2b6cb0}
+table.ctbl{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:8px}
+table.ctbl th{background:#edf2f7;color:#2d3748;padding:5px 8px;text-align:center;font-weight:600;border-bottom:2px solid #cbd5e0}
+table.ctbl td{padding:5px 6px;border-bottom:1px solid #e2e8f0;vertical-align:middle}
+table.ctbl select,table.ctbl input[type=number]{padding:4px 6px;font-size:.78rem}
+.c-summary{background:#f0fff4;border:1px solid #9ae6b4;border-radius:6px;padding:10px 14px;margin-top:8px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.c-summary-item{display:flex;flex-direction:column;align-items:center}
+.c-summary-val{font-size:1.1rem;font-weight:700;color:#276749}
+.c-summary-lbl{font-size:.7rem;color:#4a5568}
+.case-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.case-item{background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.ratio-bar{height:8px;border-radius:4px;background:#e2e8f0;margin-top:4px;overflow:hidden}
+.ratio-fill{height:100%;border-radius:4px;background:#48bb78;transition:width .3s}
+.ratio-fill.over{background:#fc8181}
+@media(max-width:768px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}}
+@media print{
+  .tabs,.btn,.header{display:none!important}
+  .section-panel{display:block!important}
+  body{background:#fff}
+  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .print-title{display:block!important;text-align:center;font-size:1.2rem;font-weight:700;margin-bottom:20px;padding:10px;border-bottom:2px solid #333}
+}
+.print-title{display:none}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:1.4rem">🌧️</span>
+      <div>
+        <h1>道路排水路 流量計算システム</h1>
+        <div class="header-sub">道路土工指針準拠 ｜ 合理式 × マニング式</div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-success btn-sm" onclick="printCalc()">🖨️ PDF出力</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('rainfall')">🌧️ 降雨・基本設定</div>
+  <div class="tab" onclick="showTab('ditch')">📐 側溝計算</div>
+  <div class="tab" onclick="showTab('culvert')">🔵 カルバート</div>
+  <div class="tab" onclick="showTab('network')">🗺️ 流下能力照査</div>
+  <div class="tab" onclick="showTab('compare')">📊 比較・出力</div>
+</div>
+
+<div class="container">
+<div class="print-title">道路排水路 流量計算書</div>
+
+<!-- ========== TAB1: 降雨・基本設定 ========== -->
+<div id="tab-rainfall" class="section-panel active">
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <div class="card-title">🌏 地域・降雨設定</div>
+        <div class="form-group">
+          <label>都道府県</label>
+          <select id="prefecture" onchange="calcRainfall()">
+            <option value="hokkaido">北海道</option>
+            <option value="aomori">青森県</option>
+            <option value="iwate">岩手県</option>
+            <option value="miyagi">宮城県</option>
+            <option value="akita">秋田県</option>
+            <option value="yamagata">山形県</option>
+            <option value="fukushima">福島県</option>
+            <option value="ibaraki" selected>茨城県</option>
+            <option value="tochigi">栃木県</option>
+            <option value="gunma">群馬県</option>
+            <option value="saitama">埼玉県</option>
+            <option value="chiba">千葉県</option>
+            <option value="tokyo">東京都</option>
+            <option value="kanagawa">神奈川県</option>
+            <option value="niigata">新潟県</option>
+            <option value="toyama">富山県</option>
+            <option value="ishikawa">石川県</option>
+            <option value="fukui">福井県</option>
+            <option value="yamanashi">山梨県</option>
+            <option value="nagano">長野県</option>
+            <option value="shizuoka">静岡県</option>
+            <option value="aichi">愛知県</option>
+            <option value="mie">三重県</option>
+            <option value="shiga">滋賀県</option>
+            <option value="kyoto">京都府</option>
+            <option value="osaka">大阪府</option>
+            <option value="hyogo">兵庫県</option>
+            <option value="nara">奈良県</option>
+            <option value="wakayama">和歌山県</option>
+            <option value="tottori">鳥取県</option>
+            <option value="shimane">島根県</option>
+            <option value="okayama">岡山県</option>
+            <option value="hiroshima">広島県</option>
+            <option value="yamaguchi">山口県</option>
+            <option value="tokushima">徳島県</option>
+            <option value="kagawa">香川県</option>
+            <option value="ehime">愛媛県</option>
+            <option value="kochi">高知県</option>
+            <option value="fukuoka">福岡県</option>
+            <option value="saga">佐賀県</option>
+            <option value="nagasaki">長崎県</option>
+            <option value="kumamoto">熊本県</option>
+            <option value="oita">大分県</option>
+            <option value="miyazaki">宮崎県</option>
+            <option value="kagoshima">鹿児島県</option>
+            <option value="okinawa">沖縄県</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>確率年（再現期間）</label>
+          <select id="returnPeriod" onchange="calcRainfall()">
+            <option value="3">3年</option>
+            <option value="5">5年</option>
+            <option value="10" selected>10年</option>
+            <option value="30">30年</option>
+            <option value="50">50年</option>
+            <option value="100">100年</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>流入時間 t₀（路面流入時間）</label>
+          <input type="number" id="t0" value="5" min="1" max="30" step="1" onchange="calcRainfall()">
+          <div class="unit">分（標準：舗装路面5分、砂利・草地10分）</div>
+        </div>
+        <div class="form-group">
+          <label>上流側排水路延長 L</label>
+          <input type="number" id="upLen" value="0" min="0" step="10" onchange="calcRainfall()">
+          <div class="unit">m（上流側排水路がない場合は0）</div>
+        </div>
+        <div class="form-group">
+          <label>上流側排水路内流速 V</label>
+          <input type="number" id="upVel" value="1.0" min="0.1" step="0.1" onchange="calcRainfall()">
+          <div class="unit">m/s</div>
+        </div>
+        <div class="formula-box">
+          更正方輪線式：r = a / (t + b)&nbsp;&nbsp;[mm/hr]<br>
+          t = t₀ + L/V/60&nbsp;&nbsp;流達時間[min]
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🏞️ 集水域・流出係数</div>
+        <!-- モード切替 -->
+        <div style="display:flex;gap:6px;margin-bottom:14px">
+          <button id="btn-simple" class="btn btn-sm c-mode-btn active-mode" onclick="toggleCMode('simple')">単純入力</button>
+          <button id="btn-composite" class="btn btn-sm c-mode-btn" onclick="toggleCMode('composite')">複合流域（加重平均）</button>
+        </div>
+
+        <!-- 単純入力モード -->
+        <div id="c-simple">
+          <div class="form-group">
+            <label>集水面積 A</label>
+            <input type="number" id="catchArea" value="0.5" min="0.01" step="0.01" onchange="calcRainfall()">
+            <div class="unit">ha（1ha = 10,000m²）</div>
+          </div>
+          <div class="form-group">
+            <label>土地利用（流出係数 C）</label>
+            <select id="landUse" onchange="updateC()">
+              <option value="0.95">舗装道路面（C=0.95）</option>
+              <option value="0.90" selected>舗装路面・切土法面（C=0.90）</option>
+              <option value="0.75">砂利道・盛土法面（C=0.75）</option>
+              <option value="0.65">草地・緑地（C=0.65）</option>
+              <option value="0.45">山地・森林（C=0.45）</option>
+              <option value="custom">任意入力</option>
+            </select>
+          </div>
+          <div class="form-group" id="customC-group" style="display:none">
+            <label>流出係数 C（任意入力）</label>
+            <input type="number" id="customC" value="0.80" min="0.1" max="1.0" step="0.01" onchange="calcRainfall()">
+          </div>
+        </div>
+
+        <!-- 複合流域モード -->
+        <div id="c-composite" style="display:none">
+          <div class="unit" style="margin-bottom:8px;color:#744210">
+            ⚠️ 各区画の土地利用と面積を入力してください。平均流出係数 = Σ(Ci×Ai) / ΣAi
+          </div>
+          <table class="ctbl">
+            <thead>
+              <tr>
+                <th style="text-align:left;width:44%">土地利用</th>
+                <th>C</th>
+                <th>面積 (ha)</th>
+                <th>C×A</th>
+                <th style="width:28px"></th>
+              </tr>
+            </thead>
+            <tbody id="c-rows"></tbody>
+          </table>
+          <button class="btn btn-primary btn-sm" onclick="addCRow()" style="margin-bottom:8px">＋ 区画追加</button>
+          <div class="c-summary" id="c-summary">
+            <div class="c-summary-item">
+              <span class="c-summary-val" id="c-avg-disp">—</span>
+              <span class="c-summary-lbl">平均流出係数 C̄</span>
+            </div>
+            <div style="color:#9ae6b4;font-size:1.2rem">→</div>
+            <div class="c-summary-item">
+              <span class="c-summary-val" id="c-totalA-disp">—</span>
+              <span class="c-summary-lbl">総集水面積 ΣA (ha)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 常時表示 -->
+        <div class="form-group" style="margin-top:12px">
+          <label>採用 流出係数 C</label>
+          <input type="number" id="dispC" value="0.90" readonly style="background:#f7fafc;color:#2b6cb0;font-weight:700">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">📊 計算結果 — 設計流量</div>
+        <div class="result-box" id="rainfall-result">
+          <div class="result-row">
+            <span class="result-label" id="r-a-label">▶ 更正方輪線式 係数 a</span>
+            <span><span class="result-value" id="r-a">—</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label" id="r-b-label">▶ 更正方輪線式 係数 b</span>
+            <span><span class="result-value" id="r-b">—</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">▶ 流達時間 t</span>
+            <span><span class="result-value" id="r-t">—</span><span class="result-unit">分</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">▶ 降雨強度 r</span>
+            <span><span class="result-value" id="r-intensity">—</span><span class="result-unit">mm/hr</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">▶ 集水面積 A</span>
+            <span><span class="result-value" id="r-area">—</span><span class="result-unit">ha</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">▶ 流出係数 C</span>
+            <span><span class="result-value" id="r-c">—</span></span>
+          </div>
+          <div class="result-row" style="background:#dbeafe;border-radius:6px;padding:8px;margin-top:4px">
+            <span class="result-label" style="font-weight:700;font-size:.85rem;color:#1e3a8a">🎯 設計流量 Q</span>
+            <span><span class="result-value" style="font-size:1.2rem;color:#1e3a8a" id="r-Q">—</span><span class="result-unit">m³/s</span></span>
+          </div>
+        </div>
+        <div class="formula-box" style="margin-top:12px">
+          合理式：Q = (1/360) × C × r × A<br>
+          Q[m³/s], r[mm/hr], A[ha]
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📈 降雨強度 — 確率年別一覧</div>
+        <table class="comp" id="rain-table">
+          <thead>
+            <tr><th>確率年</th><th>a</th><th>b</th><th>r (mm/hr)</th><th>Q (m³/s)</th></tr>
+          </thead>
+          <tbody id="rain-table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAB2: 側溝計算 ========== -->
+<div id="tab-ditch" class="section-panel hidden">
+  <div class="alert alert-info">💡 設計流量は「降雨・基本設定」タブで計算された Q を自動引用します。</div>
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <div class="card-title">📐 断面設定</div>
+        <div class="form-group">
+          <label>断面形状</label>
+          <select id="ditchType" onchange="updateDitchType()">
+            <option value="rect">矩形断面（U字溝・L字溝）</option>
+            <option value="trap">台形断面（素掘り水路）</option>
+          </select>
+        </div>
+        <div id="ditch-rect-inputs">
+          <div class="form-group">
+            <label>側溝規格（標準品）</label>
+            <select id="ditchPreset" onchange="applyDitchPreset()">
+              <option value="custom">任意入力</option>
+              <option value="300">U字溝 300型（内幅300×内高300）</option>
+              <option value="400">U字溝 400型（内幅400×内高400）</option>
+              <option value="500">U字溝 500型（内幅500×内高500）</option>
+              <option value="600">U字溝 600型（内幅600×内高600）</option>
+              <option value="800">U字溝 800型（内幅800×内高800）</option>
+              <option value="1000">U字溝 1000型（内幅1000×内高1000）</option>
+              <option value="300L">L字溝 300型（内幅300×内高300）</option>
+              <option value="400L">L字溝 400型（内幅400×内高400）</option>
+            </select>
+          </div>
+          <div class="grid2">
+            <div class="form-group">
+              <label>内幅 B</label>
+              <input type="number" id="ditchB" value="400" min="100" step="50" onchange="calcDitch()">
+              <div class="unit">mm</div>
+            </div>
+            <div class="form-group">
+              <label>内高 H</label>
+              <input type="number" id="ditchH" value="400" min="100" step="50" onchange="calcDitch()">
+              <div class="unit">mm</div>
+            </div>
+          </div>
+        </div>
+        <div id="ditch-trap-inputs" style="display:none">
+          <div class="grid2">
+            <div class="form-group">
+              <label>底幅 b</label>
+              <input type="number" id="ditchTb" value="600" min="100" step="50" onchange="calcDitch()">
+              <div class="unit">mm</div>
+            </div>
+            <div class="form-group">
+              <label>水深（設計値）H</label>
+              <input type="number" id="ditchTH" value="500" min="100" step="50" onchange="calcDitch()">
+              <div class="unit">mm</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>法勾配 m（1:m）</label>
+            <input type="number" id="ditchM" value="1.0" min="0" step="0.1" onchange="calcDitch()">
+            <div class="unit">（鉛直面=0、1:0.5→0.5）</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>水深比（流水深/内高）</label>
+          <select id="ditchFill" onchange="calcDitch()">
+            <option value="0.80" selected>80%（標準・余裕高20%）</option>
+            <option value="0.70">70%</option>
+            <option value="0.90">90%</option>
+            <option value="1.00">100%（満流）</option>
+          </select>
+        </div>
+        <div class="grid2">
+          <div class="form-group">
+            <label>縦断勾配 i</label>
+            <input type="number" id="ditchSlope" value="2.0" min="0.1" step="0.1" onchange="calcDitch()">
+            <div class="unit">‰（パーミル）例：2.0‰ = 1/500</div>
+          </div>
+          <div class="form-group">
+            <label>粗度係数 n</label>
+            <select id="ditchN" onchange="calcDitch()">
+              <option value="0.013" selected>コンクリート（0.013）</option>
+              <option value="0.015">粗コンクリート（0.015）</option>
+              <option value="0.011">塩ビ管（0.011）</option>
+              <option value="0.020">土砂（0.020）</option>
+              <option value="0.025">草地（0.025）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">📊 計算結果</div>
+        <div class="result-box">
+          <div class="result-row">
+            <span class="result-label">設計流量 Q（引用）</span>
+            <span><span class="result-value" id="d-Qdesign">—</span><span class="result-unit">m³/s</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">流水断面積 A</span>
+            <span><span class="result-value" id="d-A">—</span><span class="result-unit">m²</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">潤辺 P</span>
+            <span><span class="result-value" id="d-P">—</span><span class="result-unit">m</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">径深 R = A/P</span>
+            <span><span class="result-value" id="d-R">—</span><span class="result-unit">m</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">平均流速 V</span>
+            <span><span class="result-value" id="d-V">—</span><span class="result-unit">m/s</span></span>
+          </div>
+          <div class="result-row" style="background:#f0fff4;border-radius:6px;padding:6px;margin-top:4px">
+            <span class="result-label" style="font-weight:700;color:#276749">✅ 計画流量 Q_cal</span>
+            <span><span class="result-value" style="color:#276749" id="d-Qcal">—</span><span class="result-unit">m³/s</span></span>
+          </div>
+          <div class="result-row" style="padding-top:8px">
+            <span class="result-label">余裕度 Q_cal / Q</span>
+            <span id="d-judge">—</span>
+          </div>
+        </div>
+        <div class="formula-box">
+          マニング式：V = (1/n)・R^(2/3)・i^(1/2)<br>
+          Q_cal = V × A&nbsp;&nbsp;[m³/s]
+        </div>
+        <div style="text-align:right;margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="addCase('ditch')">📋 このケースを比較表に追加</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📐 断面図</div>
+        <div class="svg-container">
+          <svg id="ditch-svg" width="280" height="220" viewBox="0 0 280 220"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAB3: カルバート ========== -->
+<div id="tab-culvert" class="section-panel hidden">
+  <div class="alert alert-info">💡 設計流量は「降雨・基本設定」タブで計算された Q を自動引用します。</div>
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <div class="card-title">🔵 断面設定</div>
+        <div class="form-group">
+          <label>断面形状</label>
+          <select id="culvertType" onchange="updateCulvertType()">
+            <option value="circle">円形管（ヒューム管・塩ビ管）</option>
+            <option value="rect">矩形（ボックスカルバート）</option>
+          </select>
+        </div>
+        <div id="culvert-circle-inputs">
+          <div class="form-group">
+            <label>管径 D（標準品）</label>
+            <select id="culvertPreset" onchange="applyCulvertPreset()">
+              <option value="custom">任意入力</option>
+              <option value="300">φ300mm</option>
+              <option value="400">φ400mm</option>
+              <option value="500">φ500mm</option>
+              <option value="600">φ600mm</option>
+              <option value="800">φ800mm</option>
+              <option value="1000">φ1000mm</option>
+              <option value="1200">φ1200mm</option>
+              <option value="1500">φ1500mm</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>管径 D</label>
+            <input type="number" id="culvertD" value="500" min="100" step="50" onchange="calcCulvert()">
+            <div class="unit">mm</div>
+          </div>
+          <div class="form-group">
+            <label>流水条件</label>
+            <select id="culvertFill" onchange="calcCulvert()">
+              <option value="full">満流（100%）</option>
+              <option value="0.90">90%流（標準設計）</option>
+              <option value="0.80">80%流</option>
+            </select>
+          </div>
+        </div>
+        <div id="culvert-rect-inputs" style="display:none">
+          <div class="grid2">
+            <div class="form-group">
+              <label>内幅 B</label>
+              <input type="number" id="culvertB" value="1000" min="300" step="100" onchange="calcCulvert()">
+              <div class="unit">mm</div>
+            </div>
+            <div class="form-group">
+              <label>内高 H</label>
+              <input type="number" id="culvertH" value="1000" min="300" step="100" onchange="calcCulvert()">
+              <div class="unit">mm</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>水深比（流水深/内高）</label>
+            <select id="culvertRectFill" onchange="calcCulvert()">
+              <option value="0.80" selected>80%</option>
+              <option value="0.90">90%</option>
+              <option value="1.00">満流</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="form-group">
+            <label>縦断勾配 i</label>
+            <input type="number" id="culvertSlope" value="3.0" min="0.1" step="0.1" onchange="calcCulvert()">
+            <div class="unit">‰（パーミル）</div>
+          </div>
+          <div class="form-group">
+            <label>粗度係数 n</label>
+            <select id="culvertN" onchange="calcCulvert()">
+              <option value="0.013" selected>コンクリート管（0.013）</option>
+              <option value="0.011">塩ビ管・PE管（0.011）</option>
+              <option value="0.010">鋼管（0.010）</option>
+              <option value="0.015">粗コンクリート（0.015）</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>管路延長 L</label>
+          <input type="number" id="culvertLen" value="10" min="1" step="1" onchange="calcCulvert()">
+          <div class="unit">m</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">📊 計算結果</div>
+        <div class="result-box">
+          <div class="result-row">
+            <span class="result-label">設計流量 Q（引用）</span>
+            <span><span class="result-value" id="c-Qdesign">—</span><span class="result-unit">m³/s</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">流水断面積 A</span>
+            <span><span class="result-value" id="c-A">—</span><span class="result-unit">m²</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">潤辺 P</span>
+            <span><span class="result-value" id="c-P">—</span><span class="result-unit">m</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">径深 R = A/P</span>
+            <span><span class="result-value" id="c-R">—</span><span class="result-unit">m</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">平均流速 V</span>
+            <span><span class="result-value" id="c-V">—</span><span class="result-unit">m/s</span></span>
+          </div>
+          <div class="result-row" style="background:#f0fff4;border-radius:6px;padding:6px;margin-top:4px">
+            <span class="result-label" style="font-weight:700;color:#276749">✅ 計画流量 Q_cal</span>
+            <span><span class="result-value" style="color:#276749" id="c-Qcal">—</span><span class="result-unit">m³/s</span></span>
+          </div>
+          <div class="result-row" style="padding-top:8px">
+            <span class="result-label">余裕度 Q_cal / Q</span>
+            <span id="c-judge">—</span>
+          </div>
+        </div>
+        <div style="text-align:right;margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="addCase('culvert')">📋 このケースを比較表に追加</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📐 断面図</div>
+        <div class="svg-container">
+          <svg id="culvert-svg" width="280" height="220" viewBox="0 0 280 220"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAB4: 流下能力照査 ========== -->
+<div id="tab-network" class="section-panel hidden">
+
+  <div class="card">
+    <div class="card-title">🗺️ 排水区間リスト</div>
+    <div class="alert alert-info" id="net-rain-info">💧 降雨強度 r：降雨・基本設定タブで計算された値を全区間共通で使用します。</div>
+    <p style="font-size:.78rem;color:#4a5568;margin-bottom:10px">
+      上流から順に区間を追加してください。累積流量は上流から順に積算されます。<br>
+      各区間に設置する排水施設（側溝・カルバート等）を設定し、流下能力と比較します。
+    </p>
+
+    <!-- 区間入力テーブル -->
+    <div style="overflow-x:auto">
+      <table class="ntbl" id="net-input-table">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>区間名</th>
+            <th>土地利用（C）</th>
+            <th>分担面積<br>(ha)</th>
+            <th>断面種別</th>
+            <th>幅B / 径D<br>(mm)</th>
+            <th>高さH<br>(mm)</th>
+            <th>勾配<br>(‰)</th>
+            <th>粗度係数 n</th>
+            <th>水深比</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="net-rows"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="addNetSection()">＋ 区間追加</button>
+  </div>
+
+  <!-- 計算結果テーブル -->
+  <div class="card">
+    <div class="card-title">📊 流下能力照査結果</div>
+    <div style="overflow-x:auto">
+      <table class="comp" id="net-result-table">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>区間名</th>
+            <th>分担面積<br>(ha)</th>
+            <th>累積面積<br>ΣA (ha)</th>
+            <th>平均C</th>
+            <th>設計流量<br>Q (m³/s)</th>
+            <th>断面</th>
+            <th>流下能力<br>Q_cal (m³/s)</th>
+            <th>余裕度<br>Q_cal/Q</th>
+            <th>判定</th>
+          </tr>
+        </thead>
+        <tbody id="net-result-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- バーグラフ -->
+  <div class="card" id="net-chart-card" style="display:none">
+    <div class="card-title">📈 設計流量 vs 流下能力 比較グラフ</div>
+    <div id="net-chart" style="padding:8px 0"></div>
+  </div>
+
+</div>
+
+<!-- ========== TAB5: 比較・出力 ========== -->
+<div id="tab-compare" class="section-panel hidden">
+  <div class="card">
+    <div class="card-title">📊 断面比較表</div>
+    <div id="compare-empty" class="alert alert-warn">各計算タブで「比較表に追加」ボタンを押すとここに表示されます。</div>
+    <div id="compare-table-wrap" style="display:none;overflow-x:auto">
+      <table class="comp" id="compare-table">
+        <thead>
+          <tr>
+            <th>No.</th><th>種別</th><th>断面</th><th>設計流量 Q (m³/s)</th>
+            <th>計算流量 Q_cal (m³/s)</th><th>余裕度</th><th>流速 V (m/s)</th><th>判定</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="compare-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📄 計算書</div>
+    <div id="calc-sheet">
+      <div style="text-align:center;color:#718096;padding:20px">「降雨・基本設定」タブで入力後、自動的にここに計算書が表示されます。</div>
+    </div>
+    <div style="text-align:right;margin-top:12px">
+      <button class="btn btn-success" onclick="printCalc()">🖨️ PDF/印刷出力</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ============================================================
+// 降雨強度パラメータ（更正方輪線式 r = a/(t+b)）
+// 都道府県別・確率年別パラメータ（代表観測所データに基づく参考値）
+// ============================================================
+const RAIN_PARAMS = {
+  hokkaido: {3:{a:580,b:6},5:{a:700,b:6},10:{a:850,b:6},30:{a:1050,b:7},50:{a:1150,b:7},100:{a:1300,b:8}},
+  aomori:   {3:{a:700,b:6},5:{a:850,b:6},10:{a:1050,b:6},30:{a:1300,b:7},50:{a:1430,b:7},100:{a:1620,b:8}},
+  iwate:    {3:{a:680,b:5},5:{a:820,b:5},10:{a:1000,b:5},30:{a:1230,b:6},50:{a:1360,b:6},100:{a:1540,b:7}},
+  miyagi:   {3:{a:750,b:5},5:{a:900,b:5},10:{a:1100,b:5},30:{a:1360,b:6},50:{a:1500,b:6},100:{a:1700,b:7}},
+  akita:    {3:{a:720,b:6},5:{a:870,b:6},10:{a:1060,b:6},30:{a:1310,b:7},50:{a:1440,b:7},100:{a:1630,b:8}},
+  yamagata: {3:{a:730,b:5},5:{a:880,b:5},10:{a:1080,b:5},30:{a:1340,b:6},50:{a:1480,b:6},100:{a:1680,b:7}},
+  fukushima:{3:{a:790,b:5},5:{a:950,b:5},10:{a:1160,b:5},30:{a:1440,b:6},50:{a:1590,b:6},100:{a:1800,b:7}},
+  ibaraki:  {3:{a:870,b:6},5:{a:1050,b:6},10:{a:1280,b:6},30:{a:1580,b:7},50:{a:1740,b:7},100:{a:1970,b:8}},
+  tochigi:  {3:{a:850,b:5},5:{a:1020,b:5},10:{a:1250,b:5},30:{a:1550,b:6},50:{a:1710,b:6},100:{a:1940,b:7}},
+  gunma:    {3:{a:900,b:5},5:{a:1080,b:5},10:{a:1320,b:5},30:{a:1640,b:6},50:{a:1810,b:6},100:{a:2050,b:7}},
+  saitama:  {3:{a:910,b:6},5:{a:1100,b:6},10:{a:1340,b:6},30:{a:1660,b:7},50:{a:1830,b:7},100:{a:2070,b:8}},
+  chiba:    {3:{a:930,b:6},5:{a:1120,b:6},10:{a:1370,b:6},30:{a:1700,b:7},50:{a:1870,b:7},100:{a:2120,b:8}},
+  tokyo:    {3:{a:950,b:6},5:{a:1150,b:6},10:{a:1400,b:6},30:{a:1740,b:7},50:{a:1920,b:7},100:{a:2170,b:8}},
+  kanagawa: {3:{a:980,b:6},5:{a:1180,b:6},10:{a:1440,b:6},30:{a:1790,b:7},50:{a:1970,b:7},100:{a:2230,b:8}},
+  niigata:  {3:{a:750,b:6},5:{a:900,b:6},10:{a:1100,b:6},30:{a:1360,b:7},50:{a:1500,b:7},100:{a:1700,b:8}},
+  toyama:   {3:{a:810,b:6},5:{a:980,b:6},10:{a:1200,b:6},30:{a:1490,b:7},50:{a:1640,b:7},100:{a:1860,b:8}},
+  ishikawa: {3:{a:850,b:6},5:{a:1020,b:6},10:{a:1250,b:6},30:{a:1550,b:7},50:{a:1710,b:7},100:{a:1940,b:8}},
+  fukui:    {3:{a:870,b:6},5:{a:1050,b:6},10:{a:1280,b:6},30:{a:1590,b:7},50:{a:1750,b:7},100:{a:1980,b:8}},
+  yamanashi:{3:{a:900,b:5},5:{a:1080,b:5},10:{a:1320,b:5},30:{a:1640,b:6},50:{a:1810,b:6},100:{a:2050,b:7}},
+  nagano:   {3:{a:830,b:5},5:{a:1000,b:5},10:{a:1220,b:5},30:{a:1510,b:6},50:{a:1670,b:6},100:{a:1890,b:7}},
+  shizuoka: {3:{a:1000,b:6},5:{a:1200,b:6},10:{a:1470,b:6},30:{a:1820,b:7},50:{a:2010,b:7},100:{a:2280,b:8}},
+  aichi:    {3:{a:980,b:6},5:{a:1180,b:6},10:{a:1440,b:6},30:{a:1790,b:7},50:{a:1970,b:7},100:{a:2230,b:8}},
+  mie:      {3:{a:1040,b:6},5:{a:1250,b:6},10:{a:1530,b:6},30:{a:1900,b:7},50:{a:2090,b:7},100:{a:2370,b:8}},
+  shiga:    {3:{a:910,b:6},5:{a:1100,b:6},10:{a:1350,b:6},30:{a:1680,b:7},50:{a:1850,b:7},100:{a:2100,b:8}},
+  kyoto:    {3:{a:950,b:6},5:{a:1150,b:6},10:{a:1410,b:6},30:{a:1750,b:7},50:{a:1930,b:7},100:{a:2190,b:8}},
+  osaka:    {3:{a:1000,b:7},5:{a:1200,b:7},10:{a:1470,b:7},30:{a:1820,b:8},50:{a:2010,b:8},100:{a:2280,b:9}},
+  hyogo:    {3:{a:980,b:7},5:{a:1180,b:7},10:{a:1440,b:7},30:{a:1790,b:8},50:{a:1970,b:8},100:{a:2230,b:9}},
+  nara:     {3:{a:1000,b:6},5:{a:1200,b:6},10:{a:1470,b:6},30:{a:1820,b:7},50:{a:2010,b:7},100:{a:2280,b:8}},
+  wakayama: {3:{a:1080,b:7},5:{a:1300,b:7},10:{a:1590,b:7},30:{a:1980,b:8},50:{a:2180,b:8},100:{a:2470,b:9}},
+  tottori:  {3:{a:910,b:6},5:{a:1100,b:6},10:{a:1350,b:6},30:{a:1680,b:7},50:{a:1850,b:7},100:{a:2100,b:8}},
+  shimane:  {3:{a:950,b:7},5:{a:1150,b:7},10:{a:1410,b:7},30:{a:1750,b:8},50:{a:1930,b:8},100:{a:2190,b:9}},
+  okayama:  {3:{a:950,b:6},5:{a:1150,b:6},10:{a:1410,b:6},30:{a:1750,b:7},50:{a:1930,b:7},100:{a:2190,b:8}},
+  hiroshima:{3:{a:1000,b:7},5:{a:1200,b:7},10:{a:1470,b:7},30:{a:1820,b:8},50:{a:2010,b:8},100:{a:2280,b:9}},
+  yamaguchi:{3:{a:1040,b:7},5:{a:1250,b:7},10:{a:1530,b:7},30:{a:1900,b:8},50:{a:2090,b:8},100:{a:2370,b:9}},
+  tokushima:{3:{a:1120,b:7},5:{a:1350,b:7},10:{a:1650,b:7},30:{a:2050,b:8},50:{a:2260,b:8},100:{a:2560,b:9}},
+  kagawa:   {3:{a:1000,b:6},5:{a:1200,b:6},10:{a:1470,b:6},30:{a:1820,b:7},50:{a:2010,b:7},100:{a:2280,b:8}},
+  ehime:    {3:{a:1040,b:7},5:{a:1250,b:7},10:{a:1530,b:7},30:{a:1900,b:8},50:{a:2090,b:8},100:{a:2370,b:9}},
+  kochi:    {3:{a:1250,b:8},5:{a:1500,b:8},10:{a:1830,b:8},30:{a:2280,b:9},50:{a:2510,b:9},100:{a:2840,b:10}},
+  fukuoka:  {3:{a:1120,b:7},5:{a:1350,b:7},10:{a:1650,b:7},30:{a:2050,b:8},50:{a:2260,b:8},100:{a:2560,b:9}},
+  saga:     {3:{a:1160,b:7},5:{a:1400,b:7},10:{a:1710,b:7},30:{a:2130,b:8},50:{a:2350,b:8},100:{a:2660,b:9}},
+  nagasaki: {3:{a:1200,b:8},5:{a:1450,b:8},10:{a:1770,b:8},30:{a:2200,b:9},50:{a:2430,b:9},100:{a:2750,b:10}},
+  kumamoto: {3:{a:1160,b:7},5:{a:1400,b:7},10:{a:1710,b:7},30:{a:2130,b:8},50:{a:2350,b:8},100:{a:2660,b:9}},
+  oita:     {3:{a:1120,b:7},5:{a:1350,b:7},10:{a:1650,b:7},30:{a:2050,b:8},50:{a:2260,b:8},100:{a:2560,b:9}},
+  miyazaki: {3:{a:1250,b:8},5:{a:1500,b:8},10:{a:1830,b:8},30:{a:2280,b:9},50:{a:2510,b:9},100:{a:2840,b:10}},
+  kagoshima:{3:{a:1330,b:8},5:{a:1600,b:8},10:{a:1950,b:8},30:{a:2430,b:9},50:{a:2680,b:9},100:{a:3030,b:10}},
+  okinawa:  {3:{a:1500,b:9},5:{a:1800,b:9},10:{a:2200,b:9},30:{a:2740,b:10},50:{a:3020,b:10},100:{a:3420,b:11}}
+};
+
+// ============================================================
+// 3年確率10分間降雨強度 標準値（道路土工指針 解図2-14 令和5年度版）
+// ============================================================
+const RAIN_3Y_STANDARD = {
+  hokkaido:  {zone:1, r:60},
+  aomori:    {zone:2, r:70},
+  iwate:     {zone:3, r:80},
+  miyagi:    {zone:3, r:80},
+  akita:     {zone:4, r:90},
+  yamagata:  {zone:3, r:80},
+  fukushima: {zone:3, r:80},
+  ibaraki:   {zone:5, r:100},
+  tochigi:   {zone:6, r:110},
+  gunma:     {zone:6, r:110},
+  saitama:   {zone:6, r:110},
+  chiba:     {zone:6, r:110},
+  tokyo:     {zone:6, r:110},
+  kanagawa:  {zone:6, r:110},
+  niigata:   {zone:4, r:90},
+  toyama:    {zone:4, r:90},
+  ishikawa:  {zone:4, r:90},
+  fukui:     {zone:4, r:90},
+  yamanashi: {zone:4, r:90,  note:'盆地は80'},
+  nagano:    {zone:4, r:90,  note:'盆地は80'},
+  shizuoka:  {zone:5, r:100},
+  aichi:     {zone:5, r:100},
+  mie:       {zone:5, r:100, note:'志摩以南は120'},
+  shiga:     {zone:4, r:90},
+  kyoto:     {zone:5, r:100},
+  osaka:     {zone:4, r:90},
+  hyogo:     {zone:5, r:100},
+  nara:      {zone:5, r:100, note:'紀の川以南は120'},
+  wakayama:  {zone:7, r:120},
+  tottori:   {zone:4, r:90},
+  shimane:   {zone:4, r:90},
+  okayama:   {zone:4, r:90},
+  hiroshima: {zone:4, r:90},
+  yamaguchi: {zone:5, r:100},
+  tokushima: {zone:5, r:100, note:'吉野川以南は120'},
+  kagawa:    {zone:4, r:90},
+  ehime:     {zone:4, r:90},
+  kochi:     {zone:7, r:120},
+  fukuoka:   {zone:6, r:110},
+  saga:      {zone:7, r:120},
+  nagasaki:  {zone:7, r:120},
+  kumamoto:  {zone:6, r:110},
+  oita:      {zone:5, r:100},
+  miyazaki:  {zone:6, r:110},
+  kagoshima: {zone:7, r:120, note:'吐噶喇列島以南は130'},
+  okinawa:   {zone:8, r:130}
+};
+
+// ============================================================
+// グローバル状態
+// ============================================================
+let state = {
+  Q: 0,
+  r: 0,
+  t: 0,
+  C: 0.90,
+  A: 0.5,
+  cases: []
+};
+let caseCounter = 0;
+
+// ============================================================
+// 複合流域 — 平均流出係数
+// ============================================================
+let cMode = 'simple';
+let cRowCounter = 0;
+let cRows = [];
+
+const C_PRESETS = [
+  {val:'0.95', label:'舗装道路面（0.95）'},
+  {val:'0.90', label:'舗装路面・切土法面（0.90）'},
+  {val:'0.75', label:'砂利道・盛土法面（0.75）'},
+  {val:'0.65', label:'草地・緑地（0.65）'},
+  {val:'0.45', label:'山地・森林（0.45）'}
+];
+
+function toggleCMode(mode) {
+  cMode = mode;
+  document.getElementById('c-simple').style.display = mode === 'simple' ? 'block' : 'none';
+  document.getElementById('c-composite').style.display = mode === 'composite' ? 'block' : 'none';
+  document.querySelectorAll('.c-mode-btn').forEach(b => b.classList.remove('active-mode'));
+  document.getElementById('btn-' + mode).classList.add('active-mode');
+  if (mode === 'composite') {
+    if (cRows.length === 0) { addCRow(); addCRow(); }
+    calcAvgC();
+  } else {
+    updateC();
+  }
+}
+
+function addCRow() {
+  cRowCounter++;
+  cRows.push({id: cRowCounter, val: '0.90', c: 0.90, area: 0.10});
+  renderCRows();
+  calcAvgC();
+}
+
+function removeCRow(id) {
+  cRows = cRows.filter(r => r.id !== id);
+  renderCRows();
+  calcAvgC();
+}
+
+function renderCRows() {
+  const tbody = document.getElementById('c-rows');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  cRows.forEach(row => {
+    const optHtml = C_PRESETS.map(p =>
+      `<option value="${p.val}" ${row.val===p.val?'selected':''}>${p.label}</option>`
+    ).join('');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><select style="width:100%;font-size:.76rem" onchange="updateCRow(${row.id},'val',this.value)">${optHtml}</select></td>
+      <td style="text-align:center;font-weight:600;color:#2b6cb0">${row.c.toFixed(2)}</td>
+      <td><input type="number" value="${row.area.toFixed(3)}" min="0.001" step="0.01"
+          style="width:70px;text-align:right" onchange="updateCRow(${row.id},'area',this.value)"></td>
+      <td style="text-align:center;color:#276749;font-weight:600">${(row.c*row.area).toFixed(4)}</td>
+      <td><button class="btn btn-danger btn-sm" style="padding:2px 7px" onclick="removeCRow(${row.id})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateCRow(id, field, value) {
+  const row = cRows.find(r => r.id === id);
+  if (!row) return;
+  if (field === 'val') { row.val = value; row.c = parseFloat(value); }
+  else if (field === 'area') { row.area = parseFloat(value) || 0; }
+  renderCRows();
+  calcAvgC();
+}
+
+function calcAvgC() {
+  if (cRows.length === 0) return;
+  const totalCA = cRows.reduce((s, r) => s + r.c * r.area, 0);
+  const totalA  = cRows.reduce((s, r) => s + r.area, 0);
+  if (totalA <= 0) return;
+  const avgC = totalCA / totalA;
+  // サマリー表示
+  const avgEl = document.getElementById('c-avg-disp');
+  const aEl   = document.getElementById('c-totalA-disp');
+  if (avgEl) avgEl.textContent = avgC.toFixed(3);
+  if (aEl)   aEl.textContent   = totalA.toFixed(3);
+  // state と入力欄を更新してから再計算
+  state.C = avgC;
+  document.getElementById('dispC').value = avgC.toFixed(3);
+  document.getElementById('catchArea').value = totalA.toFixed(3);
+  calcRainfall();
+}
+
+// ============================================================
+// タブ切り替え
+// ============================================================
+function showTab(name) {
+  document.querySelectorAll('.section-panel').forEach(p => {
+    p.classList.add('hidden'); p.classList.remove('active');
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.remove('hidden');
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  if (name === 'ditch') { calcDitch(); }
+  if (name === 'culvert') { calcCulvert(); }
+  if (name === 'network') { renderNetRows(); calcNetResults(); }
+  if (name === 'compare') { renderCompare(); renderCalcSheet(); }
+}
+
+// ============================================================
+// 流出係数
+// ============================================================
+function updateC() {
+  const sel = document.getElementById('landUse').value;
+  const grp = document.getElementById('customC-group');
+  if (sel === 'custom') {
+    grp.style.display = 'block';
+    state.C = parseFloat(document.getElementById('customC').value) || 0.80;
+  } else {
+    grp.style.display = 'none';
+    state.C = parseFloat(sel);
+  }
+  document.getElementById('dispC').value = state.C.toFixed(2);
+  calcRainfall();
+}
+
+// ============================================================
+// 降雨強度・設計流量計算
+// ============================================================
+function calcRainfall() {
+  const pref = document.getElementById('prefecture').value;
+  const rp = parseInt(document.getElementById('returnPeriod').value);
+  const t0 = parseFloat(document.getElementById('t0').value) || 5;
+  const L = parseFloat(document.getElementById('upLen').value) || 0;
+  const V = parseFloat(document.getElementById('upVel').value) || 1.0;
+  const A = parseFloat(document.getElementById('catchArea').value) || 0.5;
+
+  let r, t, a_disp, b_disp;
+
+  if (rp === 3) {
+    // 3年確率：道路土工指針 解図2-14 標準値（10分間固定）
+    const std = RAIN_3Y_STANDARD[pref];
+    if (!std) return;
+    r = std.r;
+    t = 10; // 標準10分
+    a_disp = `区分${std.zone}（${r} mm/h）`;
+    b_disp = std.note ? `解図2-14 ※${std.note}` : '解図2-14（R5年度版）';
+    document.getElementById('r-a-label').textContent = '▶ 標準降雨強度 区分';
+    document.getElementById('r-b-label').textContent = '▶ 出典';
+    document.getElementById('r-t').textContent = '10.0（標準固定）';
+  } else {
+    // 5年以上：更正方輪線式
+    t = t0 + (L / V / 60);
+    const params = RAIN_PARAMS[pref] ? RAIN_PARAMS[pref][rp] : null;
+    if (!params) return;
+    const {a, b} = params;
+    r = a / (t + b);
+    a_disp = a;
+    b_disp = b;
+    document.getElementById('r-a-label').textContent = '▶ 更正方輪線式 係数 a';
+    document.getElementById('r-b-label').textContent = '▶ 更正方輪線式 係数 b';
+    document.getElementById('r-t').textContent = t.toFixed(1);
+  }
+
+  const Q = (1/360) * state.C * r * A;
+  state.Q = Q; state.r = r; state.t = t; state.A = A;
+
+  document.getElementById('r-a').textContent = a_disp;
+  document.getElementById('r-b').textContent = b_disp;
+  document.getElementById('r-intensity').textContent = r.toFixed(1);
+  document.getElementById('r-area').textContent = A.toFixed(3);
+  document.getElementById('r-c').textContent = state.C.toFixed(2);
+  document.getElementById('r-Q').textContent = Q.toFixed(4);
+
+  // 流下能力照査タブも連動更新
+  calcNetResults();
+
+  // 確率年別テーブル
+  const tbody = document.getElementById('rain-table-body');
+  tbody.innerHTML = '';
+  [3,5,10,30,50,100].forEach(y => {
+    const sel = y === rp;
+    const tr = document.createElement('tr');
+    tr.style.background = sel ? '#dbeafe' : '';
+    tr.style.fontWeight = sel ? '700' : '';
+    if (y === 3) {
+      // 3年は標準値
+      const std3 = RAIN_3Y_STANDARD[pref];
+      if (!std3) return;
+      const qi = (1/360) * state.C * std3.r * A;
+      tr.innerHTML = `<td>3年${sel?' ◀':''}</td>` +
+        `<td colspan="2" style="font-size:.75rem;color:#744210;text-align:center">標準値 区分${std3.zone}（解図2-14）</td>` +
+        `<td>${std3.r}</td><td>${qi.toFixed(4)}</td>`;
+    } else {
+      const p = RAIN_PARAMS[pref] ? RAIN_PARAMS[pref][y] : null;
+      if (!p) return;
+      const ti = t0 + (L / V / 60);
+      const ri = p.a / (ti + p.b);
+      const qi = (1/360) * state.C * ri * A;
+      tr.innerHTML = `<td>${y}年${sel?' ◀':''}</td><td>${p.a}</td><td>${p.b}</td><td>${ri.toFixed(1)}</td><td>${qi.toFixed(4)}</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+// ============================================================
+// 側溝（マニング式）
+// ============================================================
+function applyDitchPreset() {
+  const v = document.getElementById('ditchPreset').value;
+  if (v === 'custom') return;
+  const size = parseInt(v.replace('L',''));
+  document.getElementById('ditchB').value = size;
+  document.getElementById('ditchH').value = size;
+  calcDitch();
+}
+
+function updateDitchType() {
+  const t = document.getElementById('ditchType').value;
+  document.getElementById('ditch-rect-inputs').style.display = t==='rect'?'block':'none';
+  document.getElementById('ditch-trap-inputs').style.display = t==='trap'?'block':'none';
+  calcDitch();
+}
+
+function calcDitch() {
+  const type = document.getElementById('ditchType').value;
+  const slope = parseFloat(document.getElementById('ditchSlope').value)/1000 || 0.002;
+  const n = parseFloat(document.getElementById('ditchN').value) || 0.013;
+  const fill = parseFloat(document.getElementById('ditchFill').value);
+  let A_w, P_w, label;
+
+  if (type === 'rect') {
+    const B = parseFloat(document.getElementById('ditchB').value)/1000 || 0.4;
+    const H = parseFloat(document.getElementById('ditchH').value)/1000 || 0.4;
+    const hw = H * fill;
+    A_w = B * hw;
+    P_w = B + 2*hw;
+    label = `矩形 B=${(B*1000).toFixed(0)}×H=${(H*1000).toFixed(0)} mm`;
+    drawDitchSVG('rect', B, H, hw);
+  } else {
+    const b = parseFloat(document.getElementById('ditchTb').value)/1000 || 0.6;
+    const H = parseFloat(document.getElementById('ditchTH').value)/1000 || 0.5;
+    const m = parseFloat(document.getElementById('ditchM').value) || 1.0;
+    const hw = H;
+    A_w = (b + m*hw)*hw;
+    P_w = b + 2*hw*Math.sqrt(1+m*m);
+    label = `台形 b=${(b*1000).toFixed(0)} H=${(H*1000).toFixed(0)} 1:${m}`;
+    drawDitchSVG('trap', b, H, hw, m);
+  }
+
+  const R = A_w / P_w;
+  const V = (1/n) * Math.pow(R, 2/3) * Math.pow(slope, 0.5);
+  const Qcal = V * A_w;
+  const Q = state.Q;
+
+  document.getElementById('d-Qdesign').textContent = Q.toFixed(4);
+  document.getElementById('d-A').textContent = A_w.toFixed(4);
+  document.getElementById('d-P').textContent = P_w.toFixed(3);
+  document.getElementById('d-R').textContent = R.toFixed(4);
+  document.getElementById('d-V').textContent = V.toFixed(3);
+  document.getElementById('d-Qcal').textContent = Qcal.toFixed(4);
+
+  const ratio = Q > 0 ? Qcal / Q : 0;
+  const judgeEl = document.getElementById('d-judge');
+  if (ratio >= 1.0) {
+    judgeEl.innerHTML = `<span class="ok-badge">OK</span> <span style="font-size:.8rem;color:#276749">${ratio.toFixed(2)}倍</span>`;
+  } else {
+    judgeEl.innerHTML = `<span class="ng-badge">NG</span> <span style="font-size:.8rem;color:#c53030">${ratio.toFixed(2)}倍（不足）</span>`;
+  }
+
+  // 一時保存（比較追加用）
+  state._ditchCase = { type:'側溝', label, Q: Q.toFixed(4), Qcal: Qcal.toFixed(4), V: V.toFixed(3), ratio };
+}
+
+function drawDitchSVG(type, B, H, hw, m=0) {
+  const svg = document.getElementById('ditch-svg');
+  const W=280, SH=220, pad=30;
+  const scale = Math.min((W-2*pad)/B, (SH-2*pad-30)/H);
+  const sx = W/2 - B*scale/2;
+  const sy = SH-pad - H*scale;
+  svg.innerHTML='';
+  // dimension labels
+  const lbl=(x,y,t,anchor='middle')=>{
+    const el=document.createElementNS('http://www.w3.org/2000/svg','text');
+    el.setAttribute('x',x);el.setAttribute('y',y);
+    el.setAttribute('text-anchor',anchor);el.setAttribute('font-size','10');
+    el.setAttribute('fill','#4a5568');el.textContent=t;
+    svg.appendChild(el);
+  };
+  const line=(x1,y1,x2,y2,col='#2b6cb0',w=1.5,dash='')=>{
+    const el=document.createElementNS('http://www.w3.org/2000/svg','line');
+    el.setAttribute('x1',x1);el.setAttribute('y1',y1);
+    el.setAttribute('x2',x2);el.setAttribute('y2',y2);
+    el.setAttribute('stroke',col);el.setAttribute('stroke-width',w);
+    if(dash)el.setAttribute('stroke-dasharray',dash);
+    svg.appendChild(el);
+  };
+  const rect=(x,y,w,h,fill,stroke,sw=1)=>{
+    const el=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    el.setAttribute('x',x);el.setAttribute('y',y);
+    el.setAttribute('width',w);el.setAttribute('height',h);
+    el.setAttribute('fill',fill);el.setAttribute('stroke',stroke);
+    el.setAttribute('stroke-width',sw);
+    svg.appendChild(el);
+  };
+  if(type==='rect'){
+    // 外形
+    rect(sx, sy, B*scale, H*scale, '#f7fafc','#2b6cb0',2);
+    // 水面
+    const hwY = sy + (H-hw)*scale;
+    rect(sx, hwY, B*scale, hw*scale,'rgba(147,197,253,0.5)','none');
+    line(sx,hwY,sx+B*scale,hwY,'#3b82f6',1.5,'4 3');
+    // 寸法線
+    lbl(sx+B*scale/2, SH-5, `B=${(B*1000).toFixed(0)}mm`);
+    lbl(sx-5, sy+H*scale/2, `H=${(H*1000).toFixed(0)}mm`,'end');
+    lbl(sx+B*scale+5, hwY+hw*scale/2, `hw=${(hw*1000).toFixed(0)}mm`,'start');
+    // 水マーク
+    lbl(sx+B*scale/2, hwY+hw*scale/2+5,'〜','middle');
+  } else {
+    // 台形
+    const bTop = (B + 2*m*H)*scale;
+    const bBot = B*scale;
+    const bx = W/2 - bTop/2;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    const pts=`${bx},${sy} ${bx+bTop},${sy} ${bx+bTop-(bTop-bBot)/2},${sy+H*scale} ${bx+(bTop-bBot)/2},${sy+H*scale}`;
+    path.setAttribute('points',pts);path.setAttribute('fill','#f7fafc');
+    path.setAttribute('stroke','#2b6cb0');path.setAttribute('stroke-width','2');
+    svg.appendChild(path);
+    // 水面（満水として hw=H）
+    const hwScale = hw*scale;
+    const hwTop = (B + 2*m*hw)*scale;
+    const hwbx = W/2 - hwTop/2;
+    const wpath=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    wpath.setAttribute('points',`${hwbx},${sy+H*scale-hwScale} ${hwbx+hwTop},${sy+H*scale-hwScale} ${bx+bTop-(bTop-bBot)/2},${sy+H*scale} ${bx+(bTop-bBot)/2},${sy+H*scale}`);
+    wpath.setAttribute('fill','rgba(147,197,253,0.5)');wpath.setAttribute('stroke','none');
+    svg.appendChild(wpath);
+    line(hwbx,sy+H*scale-hwScale,hwbx+hwTop,sy+H*scale-hwScale,'#3b82f6',1.5,'4 3');
+    lbl(W/2, SH-5, `底幅b=${(B*1000).toFixed(0)}mm`);
+    lbl(bx-5, sy+H*scale/2, `H=${(H*1000).toFixed(0)}mm`,'end');
+  }
+}
+
+// ============================================================
+// カルバート
+// ============================================================
+function applyCulvertPreset() {
+  const v = document.getElementById('culvertPreset').value;
+  if (v === 'custom') return;
+  document.getElementById('culvertD').value = v;
+  calcCulvert();
+}
+
+function updateCulvertType() {
+  const t = document.getElementById('culvertType').value;
+  document.getElementById('culvert-circle-inputs').style.display = t==='circle'?'block':'none';
+  document.getElementById('culvert-rect-inputs').style.display = t==='rect'?'block':'none';
+  calcCulvert();
+}
+
+function calcCulvert() {
+  const type = document.getElementById('culvertType').value;
+  const slope = parseFloat(document.getElementById('culvertSlope').value)/1000 || 0.003;
+  const n = parseFloat(document.getElementById('culvertN').value) || 0.013;
+  let A_w, P_w, label;
+
+  if (type === 'circle') {
+    const D = parseFloat(document.getElementById('culvertD').value)/1000 || 0.5;
+    const fillStr = document.getElementById('culvertFill').value;
+    if (fillStr === 'full' || fillStr === '1.00') {
+      A_w = Math.PI * D * D / 4;
+      P_w = Math.PI * D;
+      label = `円形管 φ${(D*1000).toFixed(0)}mm 満流`;
+    } else {
+      const ratio = parseFloat(fillStr);
+      const hw = D * ratio;
+      const theta = 2 * Math.acos(1 - 2*ratio);
+      A_w = D*D/8 * (theta - Math.sin(theta));
+      P_w = D/2 * theta;
+      label = `円形管 φ${(D*1000).toFixed(0)}mm ${(ratio*100).toFixed(0)}%流`;
+    }
+    drawCulvertSVG('circle', D, parseFloat(document.getElementById('culvertFill').value==='full'?1.0:document.getElementById('culvertFill').value));
+  } else {
+    const B = parseFloat(document.getElementById('culvertB').value)/1000 || 1.0;
+    const H = parseFloat(document.getElementById('culvertH').value)/1000 || 1.0;
+    const fill = parseFloat(document.getElementById('culvertRectFill').value);
+    const hw = H * fill;
+    A_w = B * hw;
+    P_w = B + 2*hw;
+    label = `BOX B=${(B*1000).toFixed(0)}×H=${(H*1000).toFixed(0)}mm ${(fill*100).toFixed(0)}%`;
+    drawCulvertSVG('rect', B, H, fill);
+  }
+
+  const R = A_w / P_w;
+  const V = (1/n) * Math.pow(R, 2/3) * Math.pow(slope, 0.5);
+  const Qcal = V * A_w;
+  const Q = state.Q;
+
+  document.getElementById('c-Qdesign').textContent = Q.toFixed(4);
+  document.getElementById('c-A').textContent = A_w.toFixed(4);
+  document.getElementById('c-P').textContent = P_w.toFixed(3);
+  document.getElementById('c-R').textContent = R.toFixed(4);
+  document.getElementById('c-V').textContent = V.toFixed(3);
+  document.getElementById('c-Qcal').textContent = Qcal.toFixed(4);
+
+  const ratio = Q > 0 ? Qcal / Q : 0;
+  const judgeEl = document.getElementById('c-judge');
+  if (ratio >= 1.0) {
+    judgeEl.innerHTML = `<span class="ok-badge">OK</span> <span style="font-size:.8rem;color:#276749">${ratio.toFixed(2)}倍</span>`;
+  } else {
+    judgeEl.innerHTML = `<span class="ng-badge">NG</span> <span style="font-size:.8rem;color:#c53030">${ratio.toFixed(2)}倍（不足）</span>`;
+  }
+  state._culvertCase = { type:'カルバート', label, Q: Q.toFixed(4), Qcal: Qcal.toFixed(4), V: V.toFixed(3), ratio };
+}
+
+function drawCulvertSVG(type, ...args) {
+  const svg = document.getElementById('culvert-svg');
+  const W=280, SH=220, cx=W/2, cy=SH/2;
+  svg.innerHTML='';
+  if (type === 'circle') {
+    const D = args[0], fill = args[1]||1.0;
+    const r = Math.min(80, D*200);
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',cx);circle.setAttribute('cy',cy);circle.setAttribute('r',r);
+    circle.setAttribute('fill','#f7fafc');circle.setAttribute('stroke','#2b6cb0');circle.setAttribute('stroke-width','2.5');
+    svg.appendChild(circle);
+    // 水面
+    const hw = D * Math.min(fill,1.0);
+    const hy = cy + r - hw/D*2*r;
+    const clipId='cc'+Date.now();
+    const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    const clipPath = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
+    clipPath.setAttribute('id',clipId);
+    const cr = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    cr.setAttribute('cx',cx);cr.setAttribute('cy',cy);cr.setAttribute('r',r);
+    clipPath.appendChild(cr); defs.appendChild(clipPath); svg.appendChild(defs);
+    const water = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    water.setAttribute('x',cx-r);water.setAttribute('y',hy);water.setAttribute('width',2*r);water.setAttribute('height',SH);
+    water.setAttribute('fill','rgba(147,197,253,0.6)');water.setAttribute('clip-path',`url(#${clipId})`);
+    svg.appendChild(water);
+    if(fill<1.0){
+      const wl=document.createElementNS('http://www.w3.org/2000/svg','line');
+      wl.setAttribute('x1',cx-r);wl.setAttribute('y1',hy);wl.setAttribute('x2',cx+r);wl.setAttribute('y2',hy);
+      wl.setAttribute('stroke','#3b82f6');wl.setAttribute('stroke-width','1.5');wl.setAttribute('stroke-dasharray','4 3');
+      svg.appendChild(wl);
+    }
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',cx);t.setAttribute('y',SH-8);t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-size','11');t.setAttribute('fill','#4a5568');
+    t.textContent=`φ${(D*1000).toFixed(0)}mm`;
+    svg.appendChild(t);
+    // 径線
+    const dl=document.createElementNS('http://www.w3.org/2000/svg','line');
+    dl.setAttribute('x1',cx-r);dl.setAttribute('y1',cy);dl.setAttribute('x2',cx+r);dl.setAttribute('y2',cy);
+    dl.setAttribute('stroke','#a0aec0');dl.setAttribute('stroke-width','1');dl.setAttribute('stroke-dasharray','3 2');
+    svg.appendChild(dl);
+  } else {
+    const B=args[0],H=args[1],fill=args[2]||0.8;
+    const pad=40;
+    const scale=Math.min((W-2*pad)/B,(SH-2*pad-20)/H);
+    const rx=cx-B*scale/2, ry=cy-H*scale/2;
+    const rct=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rct.setAttribute('x',rx);rct.setAttribute('y',ry);rct.setAttribute('width',B*scale);rct.setAttribute('height',H*scale);
+    rct.setAttribute('fill','#f7fafc');rct.setAttribute('stroke','#2b6cb0');rct.setAttribute('stroke-width','2.5');
+    svg.appendChild(rct);
+    const hw=H*fill;
+    const wy=ry+H*scale-hw*scale;
+    const wr=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    wr.setAttribute('x',rx);wr.setAttribute('y',wy);wr.setAttribute('width',B*scale);wr.setAttribute('height',hw*scale);
+    wr.setAttribute('fill','rgba(147,197,253,0.6)');
+    svg.appendChild(wr);
+    if(fill<1.0){
+      const wl=document.createElementNS('http://www.w3.org/2000/svg','line');
+      wl.setAttribute('x1',rx);wl.setAttribute('y1',wy);wl.setAttribute('x2',rx+B*scale);wl.setAttribute('y2',wy);
+      wl.setAttribute('stroke','#3b82f6');wl.setAttribute('stroke-width','1.5');wl.setAttribute('stroke-dasharray','4 3');
+      svg.appendChild(wl);
+    }
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',cx);t.setAttribute('y',ry+H*scale+18);t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-size','10');t.setAttribute('fill','#4a5568');
+    t.textContent=`B=${(B*1000).toFixed(0)}×H=${(H*1000).toFixed(0)}mm`;
+    svg.appendChild(t);
+  }
+}
+
+// ============================================================
+// 比較表
+// ============================================================
+function addCase(which) {
+  const c = which === 'ditch' ? state._ditchCase : state._culvertCase;
+  if (!c) return;
+  caseCounter++;
+  state.cases.push({ id: caseCounter, ...c });
+  showTab2('compare');
+  renderCompare();
+}
+
+function showTab2(name) {
+  document.querySelectorAll('.section-panel').forEach(p => {
+    p.classList.add('hidden'); p.classList.remove('active');
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.remove('hidden');
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => {
+    if(t.textContent.includes('比較')) t.classList.add('active');
+  });
+  renderCompare(); renderCalcSheet();
+}
+
+function removeCase(id) {
+  state.cases = state.cases.filter(c => c.id !== id);
+  renderCompare();
+}
+
+function renderCompare() {
+  const empty = document.getElementById('compare-empty');
+  const wrap = document.getElementById('compare-table-wrap');
+  const tbody = document.getElementById('compare-tbody');
+  if (state.cases.length === 0) {
+    empty.style.display = 'block'; wrap.style.display = 'none'; return;
+  }
+  empty.style.display = 'none'; wrap.style.display = 'block';
+  tbody.innerHTML = '';
+  state.cases.forEach((c, i) => {
+    const ok = c.ratio >= 1.0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.id}</td>
+      <td>${c.type}</td>
+      <td style="text-align:left">${c.label}</td>
+      <td>${c.Q}</td>
+      <td>${c.Qcal}</td>
+      <td>${c.ratio.toFixed(2)}</td>
+      <td>${c.V}</td>
+      <td>${ok?'<span class="ok-badge">OK</span>':'<span class="ng-badge">NG</span>'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeCase(${c.id})">削除</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderCalcSheet() {
+  const el = document.getElementById('calc-sheet');
+  const pref = document.getElementById('prefecture').options[document.getElementById('prefecture').selectedIndex].text;
+  const rp = document.getElementById('returnPeriod').value;
+  el.innerHTML = `
+    <div style="border:1px solid #e2e8f0;border-radius:6px;overflow:hidden">
+      <div style="background:#1a365d;color:#fff;padding:10px 16px;font-weight:700">設計計算書 — 道路排水路流量計算</div>
+      <div style="padding:14px;font-size:.82rem">
+        <p style="margin-bottom:6px">■ 基本条件</p>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
+          <tr><td style="padding:3px 8px;width:40%;color:#4a5568">対象地域</td><td style="padding:3px 8px">${pref}</td><td style="padding:3px 8px;width:40%;color:#4a5568">確率年</td><td style="padding:3px 8px">${rp} 年確率</td></tr>
+          <tr><td style="padding:3px 8px;color:#4a5568">集水面積 A</td><td style="padding:3px 8px">${state.A.toFixed(3)} ha</td><td style="padding:3px 8px;color:#4a5568">流出係数 C</td><td style="padding:3px 8px">${state.C.toFixed(2)}</td></tr>
+          <tr><td style="padding:3px 8px;color:#4a5568">流達時間 t</td><td style="padding:3px 8px">${state.t.toFixed(1)} min</td><td style="padding:3px 8px;color:#4a5568">降雨強度 r</td><td style="padding:3px 8px">${state.r.toFixed(1)} mm/hr</td></tr>
+        </table>
+        <p style="margin-bottom:6px">■ 設計流量（合理式）</p>
+        <div style="background:#ebf8ff;padding:8px 12px;border-radius:4px;margin-bottom:12px;font-family:monospace">
+          Q = (1/360) × C × r × A = (1/360) × ${state.C.toFixed(2)} × ${state.r.toFixed(1)} × ${state.A.toFixed(3)}<br>
+          Q = <strong>${state.Q.toFixed(4)} m³/s</strong>
+        </div>
+        ${state.cases.length > 0 ? `
+        <p style="margin-bottom:6px">■ 断面検討結果</p>
+        <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+          <thead><tr style="background:#2b6cb0;color:#fff"><th style="padding:5px 8px">No.</th><th style="padding:5px 8px">種別・断面</th><th style="padding:5px 8px">Q_cal (m³/s)</th><th style="padding:5px 8px">余裕度</th><th style="padding:5px 8px">判定</th></tr></thead>
+          <tbody>${state.cases.map(c=>`<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:4px 8px;text-align:center">${c.id}</td><td style="padding:4px 8px">${c.label}</td><td style="padding:4px 8px;text-align:center">${c.Qcal}</td><td style="padding:4px 8px;text-align:center">${c.ratio.toFixed(2)}</td><td style="padding:4px 8px;text-align:center">${c.ratio>=1.0?'OK ✓':'NG ✗'}</td></tr>`).join('')}</tbody>
+        </table>` : ''}
+        <p style="margin-top:12px;font-size:.72rem;color:#718096">※ 本計算書は道路土工指針（日本道路協会）に準拠した参考値です。設計採用にあたっては現地条件・適用基準を確認してください。</p>
+      </div>
+    </div>
+  `;
+}
+
+function printCalc() {
+  renderCalcSheet();
+  window.print();
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+// ============================================================
+// 流下能力照査 — 複数区間・累積流量
+// ============================================================
+let netSections = [];
+let netRowCounter = 0;
+
+const NET_C_OPTS = [
+  {v:'0.95',l:'舗装道路面（0.95）'},
+  {v:'0.90',l:'舗装路面・切土（0.90）'},
+  {v:'0.75',l:'砂利道・盛土法面（0.75）'},
+  {v:'0.65',l:'草地・緑地（0.65）'},
+  {v:'0.45',l:'山地・森林（0.45）'},
+  {v:'custom',l:'任意入力'}
+];
+const NET_N_OPTS = [
+  {v:'0.013',l:'コンクリート（0.013）'},
+  {v:'0.015',l:'粗コンクリート（0.015）'},
+  {v:'0.011',l:'塩ビ・PE管（0.011）'},
+  {v:'0.010',l:'鋼管（0.010）'},
+  {v:'0.020',l:'土砂（0.020）'}
+];
+
+function addNetSection() {
+  netRowCounter++;
+  netSections.push({
+    id: netRowCounter,
+    name: `区間${netRowCounter}`,
+    cVal: '0.90', c: 0.90, customC: 0.90,
+    area: 0.20,
+    chanType: 'rect',
+    B: 400, H: 400, D: 500, m: 0,
+    slope: 2.0, n: 0.013, fillRatio: 0.80
+  });
+  renderNetRows();
+  calcNetResults();
+}
+
+function removeNetSection(id) {
+  netSections = netSections.filter(s => s.id !== id);
+  renderNetRows();
+  calcNetResults();
+}
+
+function updateNetSection(id, field, value) {
+  const s = netSections.find(s => s.id === id);
+  if (!s) return;
+  if (field === 'name')      s.name = value;
+  else if (field === 'cVal') {
+    s.cVal = value;
+    s.c = value === 'custom' ? s.customC : parseFloat(value);
+  }
+  else if (field === 'customC') { s.customC = parseFloat(value)||0.80; s.c = s.customC; }
+  else if (field === 'area')     s.area = parseFloat(value)||0;
+  else if (field === 'chanType') s.chanType = value;
+  else if (field === 'B')        s.B = parseFloat(value)||400;
+  else if (field === 'H')        s.H = parseFloat(value)||400;
+  else if (field === 'D')        s.D = parseFloat(value)||500;
+  else if (field === 'm')        s.m = parseFloat(value)||0;
+  else if (field === 'slope')    s.slope = parseFloat(value)||1;
+  else if (field === 'n')        s.n = parseFloat(value)||0.013;
+  else if (field === 'fillRatio') s.fillRatio = parseFloat(value)||0.80;
+  renderNetRows();
+  calcNetResults();
+}
+
+function renderNetRows() {
+  const tbody = document.getElementById('net-rows');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  netSections.forEach((s, idx) => {
+    const cOpts = NET_C_OPTS.map(o =>
+      `<option value="${o.v}" ${s.cVal===o.v?'selected':''}>${o.l}</option>`).join('');
+    const nOpts = NET_N_OPTS.map(o =>
+      `<option value="${o.v}" ${String(s.n)===o.v?'selected':''}>${o.l}</option>`).join('');
+    const fillOpts = [
+      {v:'0.80',l:'80%'},
+      {v:'0.90',l:'90%'},
+      {v:'1.00',l:'満流'}
+    ].map(o=>`<option value="${o.v}" ${String(s.fillRatio)===o.v?'selected':''}>${o.l}</option>`).join('');
+    const isCircle = s.chanType === 'circle';
+    const isTrap   = s.chanType === 'trap';
+    const dimBDlabel = isCircle ? '管径D' : '幅B';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:700;color:#2b6cb0">${idx+1}</td>
+      <td><input type="text" value="${s.name}" onchange="updateNetSection(${s.id},'name',this.value)" style="width:80px"></td>
+      <td>
+        <select onchange="updateNetSection(${s.id},'cVal',this.value)">${cOpts}</select>
+        ${s.cVal==='custom' ? `<input type="number" value="${s.customC}" min="0.1" max="1.0" step="0.01"
+          style="width:60px;margin-top:3px" onchange="updateNetSection(${s.id},'customC',this.value)">` : ''}
+      </td>
+      <td><input type="number" value="${s.area}" min="0.001" step="0.01"
+          onchange="updateNetSection(${s.id},'area',this.value)" style="width:68px"></td>
+      <td>
+        <select onchange="updateNetSection(${s.id},'chanType',this.value)" style="width:90px">
+          <option value="rect"   ${s.chanType==='rect'  ?'selected':''}>矩形（U字溝）</option>
+          <option value="circle" ${s.chanType==='circle'?'selected':''}>円形管</option>
+          <option value="trap"   ${s.chanType==='trap'  ?'selected':''}>台形水路</option>
+        </select>
+      </td>
+      <td>
+        <div style="font-size:.68rem;color:#718096;margin-bottom:2px">${dimBDlabel}</div>
+        <input type="number" value="${isCircle ? s.D : s.B}" min="100" step="50"
+          onchange="updateNetSection(${s.id}, '${isCircle?'D':'B'}', this.value)" style="width:68px">
+      </td>
+      <td>
+        ${!isCircle ? `<input type="number" value="${s.H}" min="100" step="50"
+          onchange="updateNetSection(${s.id},'H',this.value)" style="width:62px">
+          ${isTrap ? `<div style="margin-top:3px"><span style="font-size:.68rem;color:#718096">法勾配m</span>
+          <input type="number" value="${s.m}" min="0" step="0.1"
+          onchange="updateNetSection(${s.id},'m',this.value)" style="width:48px"></div>` : ''}` : '—'}
+      </td>
+      <td><input type="number" value="${s.slope}" min="0.1" step="0.1"
+          onchange="updateNetSection(${s.id},'slope',this.value)" style="width:60px"></td>
+      <td><select onchange="updateNetSection(${s.id},'n',this.value)">${nOpts}</select></td>
+      <td>
+        <select onchange="updateNetSection(${s.id},'fillRatio',this.value)" style="width:64px">${fillOpts}</select>
+      </td>
+      <td><button class="btn btn-danger btn-sm" style="padding:2px 8px"
+          onclick="removeNetSection(${s.id})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function calcSectionCap(s) {
+  const slope = s.slope / 1000;
+  const n     = s.n;
+  let A_w, P_w;
+  if (s.chanType === 'rect') {
+    const B = s.B / 1000, H = s.H / 1000, hw = H * s.fillRatio;
+    A_w = B * hw; P_w = B + 2 * hw;
+  } else if (s.chanType === 'circle') {
+    const D = s.D / 1000;
+    if (s.fillRatio >= 1.0) { A_w = Math.PI*D*D/4; P_w = Math.PI*D; }
+    else {
+      const theta = 2 * Math.acos(1 - 2*s.fillRatio);
+      A_w = D*D/8*(theta - Math.sin(theta)); P_w = D/2*theta;
+    }
+  } else {
+    const b = s.B/1000, H = s.H/1000, m = s.m;
+    A_w = (b + m*H)*H; P_w = b + 2*H*Math.sqrt(1+m*m);
+  }
+  const R = A_w / P_w;
+  return (1/n) * Math.pow(R, 2/3) * Math.pow(slope, 0.5) * A_w;
+}
+
+function sectionLabel(s) {
+  if (s.chanType === 'rect')   return `矩形 ${s.B}×${s.H}`;
+  if (s.chanType === 'circle') return `φ${s.D}`;
+  return `台形 ${s.B}×${s.H} 1:${s.m}`;
+}
+
+function calcNetResults() {
+  const r = state.r || 0;
+  // 雨量強度表示更新
+  const infoEl = document.getElementById('net-rain-info');
+  if (infoEl) infoEl.innerHTML =
+    `💧 使用降雨強度 r = <strong>${r.toFixed(1)} mm/h</strong>（降雨・基本設定タブより）　合理式：Q = (1/360)×C×r×A`;
+
+  const tbody = document.getElementById('net-result-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (netSections.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#718096;padding:16px">
+      「＋ 区間追加」で排水区間を追加してください</td></tr>`;
+    document.getElementById('net-chart-card').style.display = 'none';
+    return;
+  }
+
+  let cumCA = 0, cumA = 0;
+  const results = [];
+
+  netSections.forEach((s, idx) => {
+    cumCA += s.c * s.area;
+    cumA  += s.area;
+    const avgC   = cumCA / cumA;
+    const Qdesign = r > 0 ? (1/360) * cumCA * r : 0; // = (1/360)*C_avg*r*cumA
+    const Qcal   = calcSectionCap(s);
+    const ratio  = Qdesign > 0 ? Qcal / Qdesign : Infinity;
+    const ok     = ratio >= 1.0;
+
+    results.push({ s, cumA, avgC, Qdesign, Qcal, ratio, ok });
+
+    const tr = document.createElement('tr');
+    tr.style.background = ok ? '' : '#fff5f5';
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:700;color:#2b6cb0">${idx+1}</td>
+      <td style="text-align:left">${s.name}</td>
+      <td>${s.area.toFixed(3)}</td>
+      <td style="font-weight:600">${cumA.toFixed(3)}</td>
+      <td>${avgC.toFixed(3)}</td>
+      <td style="font-weight:600;color:#1e3a8a">${Qdesign.toFixed(4)}</td>
+      <td style="text-align:left;font-size:.75rem">${sectionLabel(s)}</td>
+      <td style="font-weight:600;color:#276749">${Qcal.toFixed(4)}</td>
+      <td style="font-weight:700;color:${ok?'#276749':'#c53030'}">${isFinite(ratio)?ratio.toFixed(2):'—'}</td>
+      <td>${ok
+        ? '<span class="ok-badge">OK</span>'
+        : '<span class="ng-badge">NG</span>'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // バーグラフ描画
+  const chartCard = document.getElementById('net-chart-card');
+  const chartDiv  = document.getElementById('net-chart');
+  if (!chartDiv) return;
+  chartCard.style.display = 'block';
+  chartDiv.innerHTML = '';
+  const maxQ = Math.max(...results.map(r => Math.max(r.Qdesign, r.Qcal))) * 1.1 || 1;
+  results.forEach((res, i) => {
+    const qPct   = Math.min(res.Qdesign / maxQ * 100, 100);
+    const capPct = Math.min(res.Qcal    / maxQ * 100, 100);
+    const over   = !res.ok;
+    const wrap = document.createElement('div');
+    wrap.className = 'net-bar-wrap';
+    wrap.innerHTML = `
+      <div class="net-bar-label">${i+1}. ${res.s.name}
+        <span style="font-size:.7rem;color:#718096;margin-left:8px">
+          Q=${res.Qdesign.toFixed(4)} m³/s　能力=${res.Qcal.toFixed(4)} m³/s
+          　余裕度 ${isFinite(res.ratio)?res.ratio.toFixed(2):'—'}
+        </span>
+      </div>
+      <div class="net-bar-track ${over?'net-bar-over':''}">
+        <div class="net-bar-q" style="width:${qPct}%">
+          ${qPct > 12 ? 'Q設計' : ''}
+        </div>
+        <div class="net-bar-cap" style="left:${capPct}%" data-label="能力 ${res.Qcal.toFixed(4)}"></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:3px;font-size:.7rem;color:#718096">
+        <span><span style="display:inline-block;width:10px;height:10px;background:${over?'#fc8181':'#4299e1'};border-radius:2px;margin-right:3px"></span>設計流量</span>
+        <span><span style="display:inline-block;width:3px;height:10px;background:#276749;margin-right:3px"></span>流下能力</span>
+      </div>
+    `;
+    chartDiv.appendChild(wrap);
+  });
+}
+
+// ============================================================
+window.addEventListener('load', () => {
+  updateC();
+  calcRainfall();
+  calcDitch();
+  calcCulvert();
+  renderCRows(); // 複合流域テーブル初期描画（行なし状態）
+});
+</script>
+</body>
+</html>
