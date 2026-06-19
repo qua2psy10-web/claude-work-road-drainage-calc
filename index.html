@@ -382,8 +382,8 @@ table.ctbl select,table.ctbl input[type=number]{padding:4px 6px;font-size:.78rem
               <div class="unit">mm</div>
             </div>
             <div class="form-group">
-              <label>水深（設計値）H</label>
-              <input type="number" id="ditchTH" value="500" min="100" step="50" onchange="calcDitch()">
+              <label>断面高（掘削深）H</label>
+              <input type="number" id="ditchTH" value="500" min="100" step="50" onchange="syncTrapHw(); calcDitch()">
               <div class="unit">mm</div>
             </div>
           </div>
@@ -391,6 +391,11 @@ table.ctbl select,table.ctbl input[type=number]{padding:4px 6px;font-size:.78rem
             <label>法勾配 m（1:m）</label>
             <input type="number" id="ditchM" value="1.0" min="0" step="0.1" onchange="calcDitch()">
             <div class="unit">（鉛直面=0、1:0.5→0.5）</div>
+          </div>
+          <div class="form-group">
+            <label>計画水深 hw</label>
+            <input type="number" id="ditchTHw" value="500" min="1" step="10" onchange="calcDitch()">
+            <div class="unit">mm（断面高 H 以下の値を入力。H と同じ値で満流）</div>
           </div>
         </div>
         <div class="form-group">
@@ -1042,6 +1047,13 @@ function applyDitchPreset() {
   calcDitch();
 }
 
+function syncTrapHw() {
+  const H = parseFloat(document.getElementById('ditchTH').value) || 500;
+  const hwEl = document.getElementById('ditchTHw');
+  if (parseFloat(hwEl.value) > H) hwEl.value = H;
+  hwEl.setAttribute('max', H);
+}
+
 function updateDitchType() {
   const t = document.getElementById('ditchType').value;
   document.getElementById('ditch-rect-inputs').style.display = t==='rect'?'block':'none';
@@ -1068,10 +1080,11 @@ function calcDitch() {
     const b = parseFloat(document.getElementById('ditchTb').value)/1000 || 0.6;
     const H = parseFloat(document.getElementById('ditchTH').value)/1000 || 0.5;
     const m = parseFloat(document.getElementById('ditchM').value) || 1.0;
-    const hw = H;
+    const hwInput = parseFloat(document.getElementById('ditchTHw').value)/1000 || H;
+    const hw = Math.min(hwInput, H);
     A_w = (b + m*hw)*hw;
     P_w = b + 2*hw*Math.sqrt(1+m*m);
-    label = `台形 b=${(b*1000).toFixed(0)} H=${(H*1000).toFixed(0)} 1:${m}`;
+    label = `台形 b=${(b*1000).toFixed(0)} H=${(H*1000).toFixed(0)} hw=${(hw*1000).toFixed(0)} 1:${m}`;
     drawDitchSVG('trap', b, H, hw, m);
   }
 
@@ -1164,6 +1177,7 @@ function drawDitchSVG(type, B, H, hw, m=0) {
     line(hwbx,sy+H*scale-hwScale,hwbx+hwTop,sy+H*scale-hwScale,'#3b82f6',1.5,'4 3');
     lbl(W/2, SH-5, `底幅b=${(B*1000).toFixed(0)}mm`);
     lbl(bx-5, sy+H*scale/2, `H=${(H*1000).toFixed(0)}mm`,'end');
+    if(hw < H) lbl(hwbx+hwTop+5, sy+H*scale-hwScale/2, `hw=${(hw*1000).toFixed(0)}mm`,'start');
   }
 }
 
