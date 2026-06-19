@@ -1,0 +1,11 @@
+{
+  "name": "road-drainage-calc",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-html": "^8.1.4",
+    "htmlhint": "^1.1.4"
+  }
+}
